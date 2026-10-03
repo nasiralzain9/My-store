@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ELITE FINMOBILES - MASTER ADMIN PANEL</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root { --bg: #030305; --surface: #101014; --card: #18181C; --gold: #D4AF37; --gold-dark: #B89B4A; --text: #FFFFFF; --muted: #98989F; --border: #2A2A30; --success: #30D158; --danger: #FF453A; --whatsapp: #25D366; --info: #0A84FF; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    html { background-color: #000; }
+    body { max-width: 480px; margin: 0 auto; background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; position: relative; padding-bottom: 90px; }
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-4 { gap: 16px; }
+    .w-full { width: 100%; }
+    .text-gold { color: var(--gold); }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .font-bold { font-weight: 700; }
+    .font-black { font-weight: 900; }
+    #authScreen { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; background: var(--bg); z-index: 10000; padding: 30px 20px; display: flex; flex-direction: column; justify-content: center; }
+    .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .auth-logo { font-size: 22px; font-weight: 900; color: var(--gold); text-align: center; margin-bottom: 8px; letter-spacing: 1px; }
+    .auth-subtitle { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .admin-header { position: sticky; top: 0; z-index: 1000; background: rgba(16, 16, 20, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .admin-brand { font-size: 16px; font-weight: 900; color: var(--gold); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .admin-brand span { color: #FFF; font-size: 10px; background: rgba(212,175,55,0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--gold); }
+    .header-icons { display: flex; gap: 12px; align-items: center; }
+    .header-icons i { font-size: 18px; color: var(--text); cursor: pointer; padding: 4px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: rgba(16, 16, 20, 0.98); backdrop-filter: blur(15px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 4px 18px; z-index: 5000; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); font-size: 9px; font-weight: 700; cursor: pointer; flex: 1; }
+    .nav-item.active { color: var(--gold); transform: translateY(-2px); }
+    .nav-item i { font-size: 18px; }
+    .admin-view { display: none; padding: 16px; animation: fadeIn 0.3s ease; }
+    .admin-view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
+    .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: var(--gold); }
+    .stat-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 20px; font-weight: 900; color: #FFF; }
+    .stat-badge { font-size: 9px; font-weight: 800; color: var(--success); display: flex; align-items: center; gap: 4px; }
+    .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .sec-title { font-size: 14px; font-weight: 900; color: #FFF; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; font-weight: 900; border: none; padding: 10px 16px; border-radius: 10px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(212,175,55,0.25); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 700; padding: 8px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; }
+    .admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; }
+    .admin-card-img { width: 55px; height: 55px; background: #0c0c0c; border-radius: 10px; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border); }
+    .admin-card-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .admin-card-info { flex: 1; min-width: 0; }
+    .admin-card-title { font-size: 13px; font-weight: 800; color: #FFF; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-card-sub { font-size: 11px; color: var(--muted); display: flex; gap: 10px; }
+    .admin-card-actions { display: flex; gap: 8px; align-items: center; }
+    .action-icon-btn { width: 32px; height: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 10px; font-weight: 800; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: #FFF; font-size: 13px; outline: none; }
+    .form-control:focus { border-color: var(--gold); }
+    .modal-overlay { display: none; position: fixed; inset: 0; max-width: 480px; margin: 0 auto; background: rgba(0,0,0,0.85); z-index: 9000; justify-content: flex-end; flex-direction: column; backdrop-filter: blur(5px); }
+    .modal-overlay.open { display: flex; }
+    .modal-dialog { background: var(--surface); border-top: 1px solid var(--gold); border-radius: 24px 24px 0 0; padding: 24px 20px 40px; max-height: 90vh; overflow-y: auto; }
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .quick-btn { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 8px; text-align: center; color: var(--text); font-size: 10px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    #adminToast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #1A1A1E; border: 1px solid var(--success); color: #FFF; padding: 12px 20px; border-radius: 30px; font-size: 12px; font-weight: bold; z-index: 9999; opacity: 0; pointer-events: none; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+    #adminToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .spinner-box { display: flex; justify-content: center; align-items: center; padding: 40px; }
+    .gold-spinner { width: 36px; height: 36px; border: 3px solid rgba(212,175,55,0.2); border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="adminToast"><i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 15px;"></i><span id="toastText">Action Successful</span></div>
+
+  <div id="authScreen">
+    <div class="auth-box">
+      <div class="auth-logo">ELITE <span style="color:#FFF;">FINMOBILES</span></div>
+      <div class="auth-subtitle">Master Admin Panel Login</div>
+      <div class="form-group"><label>Admin Password</label><input type="password" id="loginPass" class="form-control" placeholder="Enter password"></div>
+      <button class="btn-gold w-full" style="justify-content: center; padding: 14px; font-size: 13px; margin-top: 6px;" onclick="handleAdminLogin()"><i class="fa-solid fa-lock-open"></i> Login</button>
+    </div>
+  </div>
+
+  <div id="mainAdminApp" class="hidden">
+    <header class="admin-header">
+      <div class="admin-brand">ELITE <span style="color:#FFF;">ADMIN</span> <span>v3.5</span></div>
+      <div class="header-icons"><i class="fa-solid fa-bell" onclick="showToast('No new alerts')"></i><i class="fa-solid fa-right-from-bracket" style="color: var(--danger);" onclick="handleAdminLogout()"></i></div>
+    </header>
+
+    <div id="view-dashboard" class="admin-view active">
+      <div class="sec-header"><div class="sec-title">Business Overview</div><button class="btn-outline" onclick="loadDashboardStats()"><i class="fa-solid fa-rotate"></i></button></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-title">Today's Sales</div><div class="stat-value" id="statTodaySales">₹0</div></div>
+        <div class="stat-card"><div class="stat-title">Total Orders</div><div class="stat-value" id="statTotalOrders">0</div></div>
+        <div class="stat-card"><div class="stat-title">Pending Orders</div><div class="stat-value" id="statPendingOrders">0</div></div>
+        <div class="stat-card"><div class="stat-title">Total Products</div><div class="stat-value" id="statTotalProducts">0</div></div>
+      </div>
+      <div class="sec-header"><div class="sec-title">Quick Actions</div></div>
+      <div class="quick-grid">
+        <div class="quick-btn" onclick="openProductModal()"><i class="fa-solid fa-circle-plus"></i><span>Add Product</span></div>
+        <div class="quick-btn" onclick="openPreownedModal()"><i class="fa-solid fa-mobile-retro"></i><span>Add Pre-Owned</span></div>
+        <div class="quick-btn" onclick="openBannerModal()"><i class="fa-solid fa-images"></i><span>Add Banner</span></div>
+        <div class="quick-btn" onclick="openCouponModal()"><i class="fa-solid fa-ticket"></i><span>Create Coupon</span></div>
+        <div class="quick-btn" onclick="switchTab('orders')"><i class="fa-solid fa-clipboard-list"></i><span>Orders</span></div>
+      </div>
+      <div class="sec-header" style="margin-top:20px;"><div class="sec-title">Recent Orders</div></div>
+      <div id="recentOrdersContainer"><div class="spinner-box"><div class="gold-spinner"></div></div></div>
+    </div>
+
+    <div id="view-products" class="admin-view">
+      <div class="sec-header"><div class="sec-title">Products Catalogue</div><button class="btn-gold" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Add</button></div>
+      <div class="form-group"><input type="text" class="form-control" placeholder="Search..." oninput="filterProducts(this.value)"></div>
+      <div id="adminProductList"><div class="spinner-box"><div class="gold-spinner"></div></div></div>
+    </div>
+
+    <div id="view-preowned" class="admin-view">
+      <div class="sec-header"><div class="sec-title">Pre-Owned Mobiles</div><button class="btn-gold" onclick="openPreownedModal()"><i class="fa-solid fa-plus"></i> Add</button></div>
+      <div id="adminPreownedList"><div class="spinner-box"><div class="gold-spinner"></div></div></div>
+    </div>
+
+    <div id="view-orders" class="admin-view">
+      <div class="sec-header"><div class="sec-title">Orders Management</div><button class="btn-outline" onclick="loadAdminOrders()"><i class="fa-solid fa-rotate"></i></button></div>
+      <div id="adminOrderList"><div class="spinner-box"><div class="gold-spinner"></div></div></div>
+    </div>
+
+    <div id="view-marketing" class="admin-view">
+      <div class="sec-header"><div class="sec-title">Banners</div><button class="btn-gold" onclick="openBannerModal()"><i class="fa-solid fa-plus"></i> Add</button></div>
+      <div id="adminBannerList" style="margin-bottom:20px;"></div>
+      <div class="sec-header"><div class="sec-title">Coupons</div><button class="btn-gold" onclick="openCouponModal()"><i class="fa-solid fa-plus"></i> Add</button></div>
+      <div id="adminCouponList"></div>
+    </div>
+
+    <!-- WhatsApp Gateway Tab added here -->
+    <div id="view-whatsapp" class="admin-view">
+      <div class="sec-header"><div class="sec-title">WhatsApp OTP Gateway</div><button class="btn-outline" onclick="checkWaStatus()"><i class="fa-solid fa-rotate"></i></button></div>
+      <div class="auth-box" style="text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">Session Status</div>
+        <div id="waStatusBadge" style="font-size: 16px; font-weight: 900; color: var(--danger); margin-bottom: 16px;">
+          <i class="fa-solid fa-circle-xmark"></i> Disconnected
+        </div>
+        <div id="waQrBox" style="background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--border); display: inline-block; margin-bottom: 16px; min-width: 200px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 12px; color: var(--muted);">Click 'Generate QR' to link WhatsApp</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-gold" style="flex: 1; justify-content: center; padding: 12px;" onclick="generateWaQr()"><i class="fa-solid fa-qrcode"></i> Generate QR</button>
+          <button class="btn-outline" style="flex: 1; color: var(--danger); border-color: var(--danger); justify-content: center; padding: 12px;" onclick="disconnectWa()"><i class="fa-solid fa-power-off"></i> Disconnect</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="admin-view">
+      <div class="sec-header"><div class="sec-title">App Settings</div></div>
+      <div class="auth-box">
+        <div class="form-group"><label>Customer Care</label><input type="text" id="settingCarePhone" class="form-control" value="+91 9876543210"></div>
+        <div class="form-group"><label>WhatsApp</label><input type="text" id="settingWaPhone" class="form-control" value="918100048273"></div>
+        <div class="form-group"><label>Min Order</label><input type="number" id="settingMinOrder" class="form-control" value="199"></div>
+        <button class="btn-gold w-full" style="justify-content:center; padding:12px;" onclick="saveAppSettings()">Save Settings</button>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></div>
+      <div class="nav-item" id="nav-products" onclick="switchTab('products')"><i class="fa-solid fa-mobile-screen"></i><span>Products</span></div>
+      <div class="nav-item" id="nav-preowned" onclick="switchTab('preowned')"><i class="fa-solid fa-mobile-retro"></i><span>Pre-Owned</span></div>
+      <div class="nav-item" id="nav-orders" onclick="switchTab('orders')"><i class="fa-solid fa-box-open"></i><span>Orders</span></div>
+      <div class="nav-item" id="nav-marketing" onclick="switchTab('marketing')"><i class="fa-solid fa-bullhorn"></i><span>Marketing</span></div>
+      <div class="nav-item" id="nav-whatsapp" onclick="switchTab('whatsapp')"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></div>
+      <div class="nav-item" id="nav-settings" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i><span>Settings</span></div>
+    </nav>
+  </div>
+
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-dialog">
+      <div class="sec-header"><div class="sec-title">Add Product</div><i class="fa-solid fa-xmark" style="font-size:18px; color:#FFF; cursor:pointer;" onclick="closeModals()"></i></div>
+      <div class="form-group"><label>Name</label><input type="text" id="pName" class="form-control"></div>
+      <div class="form-group"><label>SKU</label><input type="text" id="pSku" class="form-control"></div>
+      <div class="flex gap-2"><div class="form-group" style="flex:1;"><label>MRP</label><input type="number" id="pMrp" class="form-control"></div><div class="form-group" style="flex:1;"><label>Price</label><input type="number" id="pPrice" class="form-control"></div></div>
+      <div class="form-group"><label>Image URL</label><input type="text" id="pImg" class="form-control"></div>
+      <div class="form-group"><label>Description</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
+      <button class="btn-gold w-full" style="justify-content:center; padding:14px;" onclick="saveProductToCloud()">Save</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="preownedModal">
+    <div class="modal-dialog">
+      <div class="sec-header"><div class="sec-title">Add Pre-Owned</div><i class="fa-solid fa-xmark" style="font-size:18px; color:#FFF; cursor:pointer;" onclick="closeModals()"></i></div>
+      <div class="form-group"><label>Model</label><input type="text" id="poName" class="form-control"></div>
+      <div class="flex gap-2"><div class="form-group" style="flex:1;"><label>Condition</label><input type="text" id="poCond" class="form-control"></div><div class="form-group" style="flex:1;"><label>Battery</label><input type="text" id="poBatt" class="form-control"></div></div>
+      <div class="form-group"><label>Price</label><input type="number" id="poPrice" class="form-control"></div>
+      <div class="form-group"><label>Image URL</label><input type="text" id="poImg" class="form-control"></div>
+      <button class="btn-gold w-full" style="justify-content:center; padding:14px;" onclick="savePreownedToCloud()">Save</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="bannerModal">
+    <div class="modal-dialog">
+      <div class="sec-header"><div class="sec-title">Add Banner</div><i class="fa-solid fa-xmark" style="font-size:18px; color:#FFF; cursor:pointer;" onclick="closeModals()"></i></div>
+      <div class="form-group"><label>Image URL</label><input type="text" id="bImg" class="form-control"></div>
+      <div class="form-group"><label>Title</label><input type="text" id="bTitle" class="form-control"></div>
+      <button class="btn-gold w-full" style="justify-content:center; padding:14px;" onclick="saveBannerToCloud()">Save</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="couponModal">
+    <div class="modal-dialog">
+      <div class="sec-header"><div class="sec-title">Add Coupon</div><i class="fa-solid fa-xmark" style="font-size:18px; color:#FFF; cursor:pointer;" onclick="closeModals()"></i></div>
+      <div class="form-group"><label>Code</label><input type="text" id="cCode" class="form-control"></div>
+      <div class="form-group"><label>Discount</label><input type="number" id="cDisc" class="form-control"></div>
+      <button class="btn-gold w-full" style="justify-content:center; padding:14px;" onclick="saveCouponToCloud()">Save</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDySQxEiRYo_Hnw_E6V8c_01NILKeQWDd0",
+      authDomain: "elite-finmobiles.firebaseapp.com",
+      projectId: "elite-finmobiles",
+      storageBucket: "elite-finmobiles.firebasestorage.app",
+      messagingSenderId: "253069515017",
+      appId: "1:253069515017:web:8539425e77605d60279bd8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let allProducts = [], allOrders = [];
+
+    function handleAdminLogin() {
+      const p = document.getElementById('loginPass').value.trim();
+      if(p !== "md@NASIR@2006") { alert("Invalid Password!"); return; }
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('mainAdminApp').classList.remove('hidden');
+      showToast("Logged In Successfully");
+      loadDashboardStats();
+      loadAdminProducts();
+      loadAdminPreowned();
+      loadAdminOrders();
+      loadAdminMarketing();
+    }
+
+    function handleAdminLogout() {
+      if(confirm("Log out?")) {
+        document.getElementById('mainAdminApp').classList.add('hidden');
+        document.getElementById('authScreen').classList.remove('hidden');
+        showToast("Logged out");
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('adminToast');
+      document.getElementById('toastText').innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function switchTab(tabId) {
+      ['dashboard', 'products', 'preowned', 'orders', 'marketing', 'whatsapp', 'settings'].forEach(id => {
+        const view = document.getElementById(`view-${id}`);
+        const nav = document.getElementById(`nav-${id}`);
+        if(view) view.classList.toggle('active', id === tabId);
+        if(nav) nav.classList.toggle('active', id === tabId);
+      });
+      window.scrollTo(0, 0);
+      if(tabId === 'whatsapp') { checkWaStatus(); }
+    }
+
+    // WhatsApp Gateway Functions
+    async function checkWaStatus() {
+      try {
+        const res = await fetch('/api/whatsapp/status');
+        const data = await res.json();
+        const badge = document.getElementById('waStatusBadge');
+        if(data.connected) {
+          badge.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Connected (${data.phone || ''})`;
+          badge.style.color = 'var(--success)';
+        } else {
+          badge.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Disconnected`;
+          badge.style.color = 'var(--danger)';
+        }
+      } catch(err) { console.error("Status check failed:", err); }
+    }
+
+    async function generateWaQr() {
+      showToast("Generating QR Code...");
+      const box = document.getElementById('waQrBox');
+      box.innerHTML = `<div class="gold-spinner"></div>`;
+      try {
+        const res = await fetch('/api/whatsapp/generate-qr', { method: 'POST' });
+        const data = await res.json();
+        if(data.qr) {
+          box.innerHTML = `<img src="${data.qr}" style="width: 180px; height: 180px; object-fit: contain;">`;
+          showToast("Scan QR with WhatsApp");
+        } else {
+          box.innerHTML = `<span style="font-size:12px; color:var(--danger);">${data.message || 'Error generating QR'}</span>`;
+        }
+      } catch(err) {
+        box.innerHTML = `<span style="font-size:12px; color:var(--danger);">Server connection error</span>`;
+      }
+    }
+
+    async function disconnectWa() {
+      if(confirm("Are you sure you want to disconnect WhatsApp?")) {
+        try {
+          await fetch('/api/whatsapp/disconnect', { method: 'POST' });
+          showToast("WhatsApp Disconnected");
+          checkWaStatus();
+          document.getElementById('waQrBox').innerHTML = `<span style="font-size: 12px; color: var(--muted);">Disconnected</span>`;
+        } catch(err) { alert(err.message); }
+      }
+    }
+
+    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
+    function openProductModal() { document.getElementById('productModal').classList.add('open'); }
+    function openPreownedModal() { document.getElementById('preownedModal').classList.add('open'); }
+    function openBannerModal() { document.getElementById('bannerModal').classList.add('open'); }
+    function openCouponModal() { document.getElementById('couponModal').classList.add('open'); }
+
+    async function loadDashboardStats() {
+      try {
+        const prodSnap = await db.collection("products").get();
+        const ordSnap = await db.collection("orders").get();
+        let totalSales = 0, pendingCount = 0;
+        ordSnap.forEach(doc => {
+          const o = doc.data();
+          totalSales += (o.total || 0);
+          if(o.status === 'Order Placed' || o.status === 'Pending') pendingCount++;
+        });
+        document.getElementById('statTodaySales').innerText = `₹${totalSales.toLocaleString('en-IN')}`;
+        document.getElementById('statTotalOrders').innerText = ordSnap.size;
+        document.getElementById('statPendingOrders').innerText = pendingCount;
+        document.getElementById('statTotalProducts').innerText = prodSnap.size;
+      } catch (err) { console.error(err); }
+    }
+
+    async function loadAdminProducts() {
+      try {
+        const snap = await db.collection("products").get();
+        const container = document.getElementById('adminProductList');
+        if(snap.empty) { container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--muted);">No products found.</div>`; return; }
+        allProducts = [];
+        snap.forEach(doc => { allProducts.push({ id: doc.id, ...doc.data() }); });
+        renderProductList(allProducts);
+      } catch (err) { console.error(err); }
+    }
+
+    function renderProductList(list) {
+      const container = document.getElementById('adminProductList');
+      container.innerHTML = list.map(p => `
+        <div class="admin-card">
+          <div class="admin-card-img"><img src="${p.images ? p.images[0] : p.image}"></div>
+          <div class="admin-card-info">
+            <div class="admin-card-title">${p.name}</div>
+            <div class="admin-card-sub"><span>₹${p.price.toLocaleString('en-IN')}</span><span style="color:var(--success);">In Stock</span></div>
+          </div>
+          <div class="admin-card-actions"><div class="action-icon-btn" onclick="deleteProduct('${p.id}')"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></div></div>
+        </div>
+      `).join('');
+    }
+
+    function filterProducts(q) {
+      renderProductList(allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+    }
+
+    async function saveProductToCloud() {
+      const name = document.getElementById('pName').value.trim();
+      const sku = document.getElementById('pSku').value.trim() || ('SKU' + Math.floor(1000 + Math.random()*9000));
+      const mrp = Number(document.getElementById('pMrp').value) || 0;
+      const price = Number(document.getElementById('pPrice').value) || 0;
+      const img = document.getElementById('pImg').value.trim() || "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600";
+      const desc = document.getElementById('pDesc').value.trim();
+      if(!name || !price) { alert("Enter Name & Price"); return; }
+      try {
+        const docRef = await db.collection("products").add({ name, sku, mrp, price, desc, returnable: true, codAvailable: true, returnText: "7 Days Return", codText: "COD Available", images: [img, img] });
+        await db.collection("products").doc(docRef.id).update({ id: docRef.id });
+        showToast("Product saved!");
+        closeModals();
+        loadAdminProducts();
+        loadDashboardStats();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function deleteProduct(id) {
+      if(confirm("Delete product?")) {
+        try {
+          await db.collection("products").doc(id).delete();
+          showToast("Deleted");
+          loadAdminProducts();
+          loadDashboardStats();
+        } catch (err) { alert(err.message); }
+      }
+    }
+
+    async function loadAdminPreowned() {
+      try {
+        const snap = await db.collection("preowned").get();
+        const container = document.getElementById('adminPreownedList');
+        if(snap.empty) { container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--muted);">No devices.</div>`; return; }
+        let html = '';
+        snap.forEach(doc => {
+          const d = doc.data();
+          html += `<div class="admin-card"><div class="admin-card-img"><img src="${d.image}"></div><div class="admin-card-info"><div class="admin-card-title">${d.name}</div><div class="admin-card-sub"><span>₹${d.price.toLocaleString('en-IN')}</span><span>Battery: ${d.battery}</span></div></div></div>`;
+        });
+        container.innerHTML = html;
+      } catch(err) { console.error(err); }
+    }
+
+    async function savePreownedToCloud() {
+      const name = document.getElementById('poName').value.trim();
+      const cond = document.getElementById('poCond').value.trim();
+      const battery = document.getElementById('poBatt').value.trim();
+      const price = Number(document.getElementById('poPrice').value) || 0;
+      const image = document.getElementById('poImg').value.trim() || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600";
+      if(!name || !price) { alert("Enter details"); return; }
+      try {
+        await db.collection("preowned").add({ name, cond, battery, price, image });
+        showToast("Device saved!");
+        closeModals();
+        loadAdminPreowned();
+      } catch(err) { alert(err.message); }
+    }
+
+    async function loadAdminOrders() {
+      try {
+        const snap = await db.collection("orders").orderBy("timestamp", "desc").get();
+        const container = document.getElementById('adminOrderList');
+        const recent = document.getElementById('recentOrdersContainer');
+        if(snap.empty) {
+          if(container) container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">No orders.</div>`;
+          if(recent) recent.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted);">No orders.</div>`;
+          return;
+        }
+        allOrders = [];
+        snap.forEach(doc => { 
+          let data = doc.data();
+          allOrders.push({ docId: doc.id, ...data }); 
+        });
+        
+        let htmlContent = allOrders.map(o => `
+          <div class="admin-card" style="flex-direction:column; align-items:flex-start; gap:6px;">
+            <div style="display:flex; justify-content:space-between; width:100%;"><span class="font-bold text-gold">#${o.id || o.docId}</span><span style="color:var(--muted); font-size:11px; margin-left:auto;">${o.date || ''}</span></div>
+            <div style="font-size:13px; font-weight:800;">${o.customerName || 'Customer'} (${o.address || ''})</div>
+            <div style="font-size:12px; color:var(--muted);">Total: ₹${(o.total || 0).toLocaleString('en-IN')}</div>
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center; border-top:1px dashed var(--border); padding-top:6px;"><span class="stat-badge">${o.status || 'Placed'}</span><button class="btn-outline" style="padding:6px 12px; font-size:11px; background:var(--surface); cursor:pointer;" onclick="updateOrderStatus('${o.docId}')">Update Status</button></div>
+          </div>
+        `).join('');
+        
+        if(container) container.innerHTML = htmlContent;
+        if(recent) recent.innerHTML = htmlContent;
+      } catch (err) { console.error(err); }
+    }
+
+    async function updateOrderStatus(docId) {
+      const status = prompt("Enter new status (Confirmed, Shipped, Out for Delivery, Delivered, Cancelled):", "Shipped");
+      if(!status) return;
+      try {
+        await db.collection("orders").doc(docId).update({ status: status });
+        showToast("Order status updated to " + status);
+        loadAdminOrders();
+        loadDashboardStats();
+      } catch(err) {
+        alert("Update failed: " + err.message);
+        console.error(err);
+      }
+    }
+
+    async function updateOrderStatus(orderId) {
+      const statuses = ["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
+      let status = prompt("Select Status:\n1. Confirmed\n2. Shipped\n3. Out for Delivery\n4. Delivered\n5. Cancelled", "Shipped");
+      
+      if(!status) return;
+      if(status === "1") status = "Confirmed";
+      if(status === "2") status = "Shipped";
+      if(status === "3") status = "Out for Delivery";
+      if(status === "4") status = "Delivered";
+      if(status === "5") status = "Cancelled";
+
+      try {
+        console.log("Updating order:", orderId, "to status:", status);
+        const snapshot = await db.collection("orders").where("id", "==", orderId).get();
+        if(!snapshot.empty) {
+          let docId = snapshot.docs[0].id;
+          await db.collection("orders").doc(docId).update({ status: status });
+        } else {
+          await db.collection("orders").doc(String(orderId)).update({ status: status });
+        }
+        showToast("Status updated to: " + status);
+        loadAdminOrders();
+        loadDashboardStats();
+      } catch(err) {
+        alert("Failed to update: " + err.message);
+        console.error(err);
+      }
+    }
+
+    async function loadAdminMarketing() {
+      try {
+        const bSnap = await db.collection("banners").get();
+        const cSnap = await db.collection("coupons").get();
+        let bHtml = bSnap.empty ? '<div style="font-size:11px; color:var(--muted);">No banners.</div>' : '';
+        bSnap.forEach(doc => { const b = doc.data(); bHtml += `<div class="admin-card" style="padding:10px;"><img src="${b.image}" style="width:40px; height:20px; object-fit:cover; border-radius:4px;"><span style="font-size:12px; font-weight:700; margin-left:10px;">${b.title}</span></div>`; });
+        document.getElementById('adminBannerList').innerHTML = bHtml;
+
+        let cHtml = cSnap.empty ? '<div style="font-size:11px; color:var(--muted);">No coupons.</div>' : '';
+        cSnap.forEach(doc => { const c = doc.data(); cHtml += `<div class="admin-card" style="padding:10px;"><span style="font-size:12px; font-weight:800; color:var(--gold);">${c.code}</span><span style="margin-left:auto; font-size:11px; color:var(--success);">₹${c.discount} OFF</span></div>`; });
+        document.getElementById('adminCouponList').innerHTML = cHtml;
+      } catch(err) { console.error(err); }
+    }
+
+    async function saveBannerToCloud() {
+      const image = document.getElementById('bImg').value.trim();
+      const title = document.getElementById('bTitle').value.trim();
+      if(!image || !title) { alert("Fill fields"); return; }
+      try {
+        await db.collection("banners").add({ image, title });
+        showToast("Banner saved!");
+        closeModals();
+        loadAdminMarketing();
+      } catch(err) { alert(err.message); }
+    }
+
+    async function saveCouponToCloud() {
+      const code = document.getElementById('cCode').value.trim().toUpperCase();
+      const discount = Number(document.getElementById('cDisc').value) || 0;
+      if(!code || !discount) { alert("Fill fields"); return; }
+      try {
+        await db.collection("coupons").doc(code).set({ code, discount });
+        showToast("Coupon saved!");
+        closeModals();
+        loadAdminMarketing();
+      } catch(err) { alert(err.message); }
+    }
+
+    async function saveAppSettings() {
+      const carePhone = document.getElementById('settingCarePhone').value.trim();
+      const waPhone = document.getElementById('settingWaPhone').value.trim();
+      const minOrder = Number(document.getElementById('settingMinOrder').value) || 199;
+      try {
+        await db.collection("settings").doc("app_config").set({ carePhone, waPhone, minOrder }, { merge: true });
+        showToast("Settings saved!");
+      } catch(err) { alert(err.message); }
+    }
+  </script>
+</body>
+</html>

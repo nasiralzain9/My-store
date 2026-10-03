@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ELITE FINMOBILES</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root { --bg: #050505; --surface: #121212; --card: #1A1A1C; --gold: #D4AF37; --gold-dark: #B89B4A; --text: #FFFFFF; --muted: #8E8E93; --border: #2C2C2E; --success: #30D158; --danger: #FF453A; --whatsapp: #25D366; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    html { background-color: #000; scroll-behavior: smooth; }
+    body { max-width: 480px; margin: 0 auto; background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; position: relative; padding-bottom: 110px; }
+
+    /* HEADER */
+    .app-header { position: sticky; top: 0; z-index: 1000; background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .app-brand { font-size: 18px; font-weight: 900; color: var(--gold); letter-spacing: 1px; }
+    .app-header-icons i { font-size: 20px; color: var(--text); padding: 4px; cursor: pointer; }
+    
+    /* BOTTOM NAV */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(15px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 8px 18px; z-index: 5000; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 700; cursor: pointer; flex: 1; position: relative; }
+    .nav-item.active { color: var(--gold); transform: translateY(-2px); }
+    .nav-item i { font-size: 20px; }
+    .cart-badge { position: absolute; top: -4px; right: 20%; background: var(--danger); color: #FFF; font-size: 9px; width: 14px; height: 14px; display: none; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; }
+
+    .view-container { display: none; padding: 0 0 20px 0; }
+    .view-container.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* HOME ELEMENTS */
+    .search-box { padding: 12px 16px; background: var(--bg); }
+    .search-inner { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; gap: 12px; }
+    .search-inner input { background: transparent; border: none; outline: none; color: var(--text); font-size: 14px; width: 100%; }
+
+    .banner-wrapper { padding: 0 16px; margin-top: 4px; }
+    .banner-container { width: 100%; aspect-ratio: 21/9; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid var(--border); background: var(--surface); }
+    .banner-track { display: flex; width: 100%; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .banner-track::-webkit-scrollbar { display: none; }
+    .banner-slide { min-width: 100%; height: 100%; scroll-snap-align: center; }
+    .banner-slide img { width: 100%; height: 100%; object-fit: cover; }
+    .banner-dots { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+    .b-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: 0.3s; }
+    .b-dot.active { background: var(--gold); width: 18px; border-radius: 4px; }
+
+    .sale-countdown-box { margin: 12px 16px; background: linear-gradient(135deg, #2a1b0a, #151515); border: 1px solid var(--gold); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(212,175,55,0.15); }
+    .sale-left-title { font-size: 13px; font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 6px; }
+    .sale-timer-digits { display: flex; gap: 4px; align-items: center; font-family: monospace; font-size: 12px; font-weight: bold; }
+    .timer-box { background: #000; color: var(--gold); padding: 4px 6px; border-radius: 6px; border: 1px solid rgba(212,175,55,0.3); }
+
+    .section-header { padding: 0 16px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .section-title { font-size: 15px; font-weight: 900; color: #FFF; }
+    
+    .spinner-box { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; padding: 40px 0; }
+    .gold-spinner { width: 36px; height: 36px; border: 3px solid rgba(212,175,55,0.2); border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 0 16px; }
+    .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .prod-img-box { width: 100%; height: 160px; background: #0c0c0c; display: flex; align-items: center; justify-content: center; padding: 12px; border-bottom: 1px solid var(--border); position: relative; cursor: pointer; }
+    .prod-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    
+    .wish-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 13px; z-index: 2; cursor: pointer; }
+    .wish-btn.active { color: var(--danger); border-color: var(--danger); background: rgba(255,69,58,0.1); }
+    .prod-body { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; cursor: pointer; }
+    .prod-name { font-size: 12px; font-weight: 800; color: #FFF; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .prod-pricing-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .prod-price { font-size: 16px; font-weight: 900; color: var(--gold); }
+    .btn-add-cart { width: 100%; background: var(--surface); color: var(--gold); border: 1px solid var(--gold); padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 800; margin-top: auto; cursor: pointer; }
+
+    /* CART & CHECKOUT */
+    .cart-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; gap: 12px; margin-bottom: 12px; }
+    .cart-img { width: 70px; height: 70px; background: #0c0c0c; border-radius: 8px; padding: 4px; display: flex; align-items: center; justify-content: center; }
+    .cart-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .cart-details { flex: 1; }
+    .cart-title { font-size: 13px; font-weight: 800; color: #FFF; margin-bottom: 4px; }
+    .cart-price { font-size: 15px; font-weight: 900; color: var(--gold); }
+    .cart-controls { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .qty-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); color: #FFF; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    
+    .cart-summary { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 16px; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .summary-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: var(--gold); border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 8px; }
+    .btn-checkout { width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border: none; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 900; margin-top: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(212,175,55,0.3); }
+
+    #stickyCartBar { position: fixed; bottom: 75px; left: 16px; right: 16px; max-width: 448px; margin: 0 auto; background: linear-gradient(135deg, #1A1A1C, #000); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 16px; display: none; align-items: center; justify-content: space-between; z-index: 4500; box-shadow: 0 5px 20px rgba(212,175,55,0.3); cursor: pointer; }
+    #stickyCartBar.show { display: flex; }
+
+    .checkout-modal { display: none; position: fixed; top: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: 100vh; background: rgba(0,0,0,0.85); z-index: 7000; flex-direction: column; justify-content: flex-end; backdrop-filter: blur(4px); }
+    .checkout-modal.open { display: flex; }
+    .checkout-dialog { background: var(--surface); border-top: 1px solid var(--gold); border-radius: 24px 24px 0 0; padding: 24px 20px 40px; max-height: 85vh; overflow-y: auto; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+    .form-input { width: 100%; background: #0A0A0C; border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #FFF; font-size: 13px; outline: none; }
+
+    /* CATEGORY GRID */
+    .cat-page-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 16px; }
+    .cat-page-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; cursor: pointer; }
+    .cat-page-icon { width: 40px; height: 40px; margin-bottom: 12px; }
+    .cat-page-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .cat-page-name { font-size: 11px; font-weight: 700; color: #FFF; text-align: center; }
+
+    /* FEATURE BOXES */
+    .feature-box { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .feature-input { flex: 1; background: transparent; border: none; color: #FFF; font-size: 13px; outline: none; }
+    .feature-btn { background: var(--card); border: 1px solid var(--border); color: var(--gold); padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; }
+
+    /* ORDERS & PROFILE */
+    .order-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+    .order-item { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .order-item-img { width: 40px; height: 40px; background: #0c0c0c; border-radius: 6px; padding: 4px; }
+    .order-item-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .order-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 12px; }
+    .order-status { background: rgba(48,209,88,0.15); color: var(--success); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+
+    .profile-header-card { background: linear-gradient(135deg, var(--card), #111); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .profile-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: #000; }
+    .profile-menu { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .menu-item-left { display: flex; align-items: center; gap: 16px; }
+    .menu-icon { font-size: 18px; color: var(--gold); width: 24px; text-align: center; }
+    .menu-text { font-size: 14px; font-weight: 700; color: #FFF; }
+
+    /* PDP & ZOOM LIGHTBOX */
+    .pdp-page { display: none; background: var(--bg); height: 100vh; width: 100%; position: fixed; top: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; z-index: 6000; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 120px; }
+    .pdp-page.open { display: block; }
+    .pdp-header { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; z-index: 10; }
+    .pdp-circle-btn { width: 40px; height: 40px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 18px; cursor: pointer; }
+    
+    .pdp-img-container { background: #0c0c0c; border-bottom: 1px solid var(--border); padding-top: 60px; padding-bottom: 15px; position: relative; }
+    .pdp-photos-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .pdp-large-img-wrap { min-width: 100%; height: 300px; display: flex; align-items: center; justify-content: center; scroll-snap-align: center; padding: 20px; cursor: zoom-in; }
+    .pdp-large-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
+    
+    .pdp-photo-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+    .pdp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.3s ease; }
+    .pdp-dot.active { background: var(--gold); width: 16px; border-radius: 3px; }
+
+    #zoomLightbox { display: none; position: fixed; top: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: 100vh; background: rgba(0,0,0,0.98); z-index: 10000; flex-direction: column; justify-content: space-between; padding: 20px 0; }
+    .lb-scroller { display: flex; width: 100%; height: 75vh; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .lb-slide { min-width: 100%; height: 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+    .lb-slide img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.25s ease-out; transform-origin: center center; }
+
+    .pdp-transparent-info { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .pdp-info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: #DDD; }
+    .pdp-info-row i { font-size: 16px; width: 20px; text-align: center; }
+
+    .pdp-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 14px 16px; display: flex; gap: 12px; z-index: 20; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+    .pdp-btn-outline { flex: 1; background: var(--surface); border: 2px solid var(--gold); color: var(--gold); font-weight: 900; font-size: 15px; border-radius: 14px; padding: 16px; cursor: pointer; text-align: center; }
+    .pdp-btn-solid { flex: 1; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; font-weight: 900; font-size: 15px; border: none; border-radius: 14px; padding: 16px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(212,175,55,0.3); }
+
+    .floating-wa { position: fixed; bottom: 145px; right: 16px; width: 48px; height: 48px; background: var(--whatsapp); color: #FFF; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(37,211,102,0.4); z-index: 4400; cursor: pointer; }
+    
+    #toastNotification { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #222; border: 1px solid var(--success); color: #FFF; padding: 12px 20px; border-radius: 30px; font-size: 12px; font-weight: bold; z-index: 9500; opacity: 0; pointer-events: none; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+    #toastNotification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+
+<style>
+  #splashScreen {
+    position: fixed;
+    inset: 0;
+    background: #050505;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  .splash-logo {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--gold, #D4AF37);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-align: center;
+    animation: pulseGlow 1.5s ease-in-out infinite;
+  }
+  .splash-sub {
+    font-size: 11px;
+    color: var(--muted, #8E8E93);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+  @keyframes pulseGlow {
+    0% { opacity: 0.5; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.5; transform: scale(0.98); }
+  }
+</style>
+
+<style>
+  .login-page {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg, #050505);
+    z-index: 8000;
+    padding: 24px;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .login-page.open { display: flex; }
+  .login-card {
+    background: var(--card, #1A1A1C);
+    border: 1px solid var(--border, #2C2C2E);
+    border-radius: 20px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .login-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--gold, #D4AF37);
+    margin-bottom: 8px;
+  }
+  .login-sub {
+    font-size: 12px;
+    color: var(--muted, #8E8E93);
+    margin-bottom: 24px;
+  }
+  .login-input-group {
+    display: flex;
+    align-items: center;
+    background: #0A0A0C;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+  }
+  .login-input-group span {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 8px;
+  }
+  .login-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #FFF;
+    font-size: 15px;
+    padding: 10px 0;
+  }
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark, #B89B4A));
+    color: #000;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(212,175,55,0.3);
+  }
+  .login-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--surface, #121212);
+    border: 1px solid var(--border);
+    color: #FFF;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <div id="splashScreen">
+    <div class="splash-logo">ELITE FINMOBILES</div>
+    <div class="splash-sub">Premium Mobile Destination</div>
+  </div>
+
+  <div id="toastNotification"><i class="fa-solid fa-circle-check"></i> <span id="toastText"></span></div>
+  <div class="floating-wa" id="whatsappBtn" onclick="window.open('https://wa.me/918100048273?text=Hello%20Elite%20FinMobiles', '_blank')"><i class="fa-brands fa-whatsapp"></i></div>
+
+  <!-- STICKY CART BAR -->
+  <div id="stickyCartBar" onclick="switchTab('cart')">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:36px; height:36px; background:rgba(212,175,55,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--gold);"><i class="fa-solid fa-bag-shopping"></i></div>
+      <div><div style="font-size:12px; font-weight:800; color:#FFF;" id="stickyItemsText">0 Items</div><div style="font-size:10px; color:var(--muted);">Tap to View Bag</div></div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:15px; font-weight:900; color:var(--gold);" id="stickyTotalText">₹0</span><i class="fa-solid fa-chevron-right" style="font-size:12px; color:var(--muted);"></i></div>
+  </div>
+
+  <div id="mainApp">
+    <header class="app-header">
+      <div class="app-brand">ELITE <span style="color:#FFF;">FINMOBILES</span></div>
+      <div class="app-header-icons"><i class="fa-regular fa-bell"></i></div>
+    </header>
+
+    <!-- HOME -->
+    <div id="view-home" class="view-container active">
+      <div class="search-box"><div class="search-inner"><i class="fa-solid fa-magnifying-glass" style="color: var(--muted);"></i><input type="text" placeholder="Search smartphones, accessories..."></div></div>
+      <div class="banner-wrapper"><div class="banner-container"><div class="banner-track" id="bannerTrack"></div></div><div class="banner-dots" id="bannerDots"></div></div>
+      
+      <div class="sale-countdown-box">
+        <div class="sale-left-title"><i class="fa-solid fa-bolt" style="color:var(--gold);"></i> Deal of the Day</div>
+        <div class="sale-timer-digits">
+          <span class="timer-box" id="timerHours">05</span>h : 
+          <span class="timer-box" id="timerMins">42</span>m : 
+          <span class="timer-box" id="timerSecs">18</span>s
+        </div>
+      </div>
+
+      <div class="section-header"><div class="section-title">Trending Now</div></div>
+      
+      <!-- PRODUCT GRID WITH GOLD SPINNER -->
+      <div class="product-grid" id="productGridContainer">
+        <div class="spinner-box">
+          <div class="gold-spinner"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CATEGORIES -->
+    <div id="view-categories" class="view-container">
+      <div class="section-header"><div class="section-title">All Categories</div></div>
+      <div class="cat-page-grid" id="categoryGridPage"></div>
+    </div>
+    
+    <!-- ORDERS -->
+    <div id="view-orders" class="view-container">
+      <div class="section-header"><div class="section-title">My Orders 📦</div></div>
+      <div id="ordersContainer" style="padding: 0 16px;"></div>
+    </div>
+    
+    <!-- WISHLIST -->
+    <div id="view-wishlist" class="view-container">
+      <div class="section-header" style="justify-content: flex-start; gap: 16px;">
+        <i class="fa-solid fa-arrow-left" style="font-size: 18px; color: var(--gold); cursor: pointer;" onclick="switchTab('profile')"></i>
+        <div class="section-title">My Wishlist ❤</div>
+      </div>
+      <div class="product-grid" id="wishlistContainer" style="margin-top: 16px;"></div>
+    </div>
+
+    <!-- CART -->
+    <div id="view-cart" class="view-container">
+      <div class="section-header"><div class="section-title">Shopping Bag 🛍️</div></div>
+      <div id="cartItemsContainer" style="padding: 0 16px;"></div>
+      
+      <div id="cartSummaryBox" style="padding: 0 16px; display: none;">
+        <div class="feature-box">
+          <i class="fa-solid fa-location-dot" style="color:var(--muted);"></i>
+          <input type="number" id="pinInput" class="feature-input" placeholder="Check Pincode (711102)">
+          <button class="feature-btn" onclick="checkPincode()">CHECK</button>
+        </div>
+        <div id="pinResult" style="font-size:11px; margin-top:-6px; margin-bottom:12px; margin-left:4px; display:none;"></div>
+
+        <div class="feature-box">
+          <i class="fa-solid fa-ticket" style="color:var(--gold);"></i>
+          <input type="text" id="couponInput" class="feature-input" placeholder="Coupon Code (ELITE100)">
+          <button class="feature-btn" onclick="applyCoupon()">APPLY</button>
+        </div>
+        <div id="couponResult" style="font-size:11px; margin-top:-6px; margin-bottom:12px; margin-left:4px; display:none;"></div>
+
+        <div class="cart-summary">
+          <div class="summary-row"><span>Total MRP</span><span id="summMrp">₹0</span></div>
+          <div class="summary-row" id="couponRow" style="display:none; color:var(--success);"><span>Discount</span><span id="summCoupon">-₹0</span></div>
+          <div class="summary-row"><span>Delivery Charge</span><span style="color:var(--success); font-weight:bold;">FREE</span></div>
+          <div class="summary-total"><span>Amount Payable</span><span id="summTotal">₹0</span></div>
+        </div>
+        <button class="btn-checkout" onclick="openCheckout()">Checkout Securely</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="view-profile" class="view-container" style="padding: 16px;">
+      <div class="profile-header-card"><div class="profile-avatar">E</div><div class="profile-info"><div class="profile-name">Elite Customer</div><div class="profile-phone">+91 9876543210</div></div></div>
+      <div class="profile-menu">
+        <div class="menu-item" onclick="switchTab('orders')"><div class="menu-item-left"><i class="fa-solid fa-box-open menu-icon"></i><span class="menu-text">My Orders</span></div><i class="fa-solid fa-chevron-right" style="color:var(--muted); font-size:12px;"></i></div>
+        <div class="menu-item" onclick="switchTab('wishlist')"><div class="menu-item-left"><i class="fa-solid fa-heart menu-icon" style="color:var(--danger);"></i><span class="menu-text">My Wishlist</span></div><i class="fa-solid fa-chevron-right" style="color:var(--muted); font-size:12px;"></i></div>
+        <div class="menu-item" onclick="window.open('https://wa.me/918100048273?text=Support', '_blank')"><div class="menu-item-left"><i class="fa-brands fa-whatsapp menu-icon" style="color:var(--whatsapp);"></i><span class="menu-text">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:var(--muted); font-size:12px;"></i></div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item active" id="nav-home" onclick="switchTab('home')"><i class="fa-solid fa-house"></i><span>Home</span></div>
+      <div class="nav-item" id="nav-categories" onclick="switchTab('categories')"><i class="fa-solid fa-layer-group"></i><span>Categories</span></div>
+      <div class="nav-item" id="nav-orders" onclick="switchTab('orders')"><i class="fa-solid fa-box-open"></i><span>Orders</span></div>
+      <div class="nav-item" id="nav-cart" onclick="switchTab('cart')"><i class="fa-solid fa-bag-shopping"></i><div class="cart-badge" id="cartBadge">0</div><span>Cart</span></div>
+      <div class="nav-item" id="nav-profile" onclick="switchTab('profile')"><i class="fa-solid fa-circle-user"></i><span>Profile</span></div>
+    </nav>
+  </div>
+
+  <!-- ZOOM LIGHTBOX -->
+  <div id="zoomLightbox">
+    <div style="display:flex; justify-content:flex-end; padding:12px 16px;">
+      <div class="pdp-circle-btn" onclick="closeZoomLightbox()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="lb-scroller" id="lbScroller"></div>
+    <div style="text-align:center; color:var(--muted); font-size:11px; padding:12px;">Double-tap to Zoom In/Out | Swipe for photos</div>
+  </div>
+
+  <!-- PDP -->
+  <div class="pdp-page" id="pdpFullPage">
+    <div class="pdp-header"><div class="pdp-circle-btn" onclick="closePdpPage()"><i class="fa-solid fa-arrow-left"></i></div></div>
+    <div class="pdp-img-container">
+      <div class="pdp-photos-scroller" id="pdpPhotosScroller"></div>
+      <div class="pdp-photo-dots" id="pdpPhotoDots"></div>
+    </div>
+    <div style="padding: 20px 16px;">
+      <div style="font-size:18px; font-weight:900; color:#FFF; margin-bottom:12px;" id="pdpTitle"></div>
+      <div style="font-size:24px; font-weight:900; color:var(--gold); margin-bottom:12px;" id="pdpPrice"></div>
+      
+      <div style="font-size:13px; color:var(--muted); line-height:1.6; margin-bottom: 12px;" id="pdpDescription"></div>
+
+      <div class="pdp-transparent-info">
+        <div class="pdp-info-row" id="pdpReturnRow">
+          <i class="fa-solid fa-rotate-left" style="color:var(--gold);"></i>
+          <span id="pdpReturnText">7 Days Return & Easy Replacement</span>
+        </div>
+        <div class="pdp-info-row" id="pdpCodRow">
+          <i class="fa-solid fa-truck-fast" style="color:var(--success);"></i>
+          <span id="pdpCodText">Cash on Delivery (COD) Available</span>
+        </div>
+      </div>
+    </div>
+    <div class="pdp-bottom-bar">
+      <button class="pdp-btn-outline" onclick="addToCart(currentPdpId); showToast('Added to Bag');">Add to Bag</button>
+      <button class="pdp-btn-solid" onclick="addToCart(currentPdpId); switchTab('cart');">Buy Now</button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="checkout-modal" id="checkoutModal" onclick="closeCheckout()">
+    <div class="checkout-dialog" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <span style="font-size:16px; font-weight:900; color:var(--gold);">Secure Checkout</span>
+        <i class="fa-solid fa-xmark" style="font-size:20px; color:#FFF; cursor:pointer;" onclick="closeCheckout()"></i>
+      </div>
+      <div class="form-group"><label>Full Name *</label><input type="text" id="chkName" class="form-input" placeholder="Enter name"></div>
+      <div class="form-group"><label>Delivery Address *</label><textarea id="chkAddr" class="form-input" rows="2" placeholder="House, Area, Landmark"></textarea></div>
+      <button class="btn-checkout" onclick="placeOrder()">Confirm & Place Order</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDySQxEiRYo_Hnw_E6V8c_01NILKeQWDd0",
+      authDomain: "elite-finmobiles.firebaseapp.com",
+      projectId: "elite-finmobiles",
+      storageBucket: "elite-finmobiles.firebasestorage.app",
+      messagingSenderId: "253069515017",
+      appId: "1:253069515017:web:8539425e77605d60279bd8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const fallbackProducts = [
+      { 
+        id: "p1", name: "Elite Pro 5G Smartphone (128GB)", mrp: 24999, price: 18999, 
+        returnable: true, codAvailable: true, returnText: "7 Days Return & Easy Replacement", codText: "Cash on Delivery (COD) Available",
+        desc: "Lightning-fast 5G with AMOLED display and dual camera setup. Experience true performance.", 
+        images: [
+          "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600",
+          "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600",
+          "https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800"
+        ]
+      },
+      { 
+        id: "p2", name: "Ultra Bass Wireless Neckband", mrp: 2499, price: 999, 
+        returnable: false, codAvailable: false, returnText: "No Return Applicable", codText: "COD Not Available (Prepaid Only)",
+        desc: "Punchy bass with 40 hrs continuous playback. Crystal clear sound quality.", 
+        images: [
+          "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600",
+          "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600"
+        ]
+      }
+    ];
+
+    let appData = {
+      banners: ["https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"],
+      categories: [
+        { name: "Mobiles", icon: "https://cdn-icons-png.flaticon.com/128/2920/2920373.png" },
+        { name: "Covers", icon: "https://cdn-icons-png.flaticon.com/128/5943/5943034.png" },
+        { name: "Chargers", icon: "https://cdn-icons-png.flaticon.com/128/3067/3067272.png" },
+        { name: "Audio", icon: "https://cdn-icons-png.flaticon.com/128/2591/2591147.png" }
+      ],
+      products: []
+    };
+
+    let cart = [], myOrders = [], wishlist = ["p2"], currentPdpId = null, discountApplied = 0;
+    let currentZoomScale = 1;
+    let currentLightboxImages = [];
+
+    window.onload = async () => {
+      const track = document.getElementById('bannerTrack');
+      if(track) {
+        track.innerHTML = appData.banners.map(img => `<div class="banner-slide"><img src="${img}"></div>`).join('');
+        document.getElementById('bannerDots').innerHTML = appData.banners.map((_, i) => `<div class="b-dot ${i===0?'active':''}" id="bdot-${i}"></div>`).join('');
+        setInterval(() => { let i = (Math.round(track.scrollLeft/track.clientWidth) + 1) % appData.banners.length; track.scrollTo({ left: i*track.clientWidth, behavior: 'smooth' }); }, 3500);
+      }
+
+      startSaleTimer();
+
+      const catGrid = document.getElementById('categoryGridPage');
+      if(catGrid) {
+        catGrid.innerHTML = appData.categories.map(c => `
+          <div class="cat-page-card" onclick="showToast('Loading ${c.name}...')">
+            <div class="cat-page-icon"><img src="${c.icon}"></div>
+            <div class="cat-page-name">${c.name}</div>
+          </div>
+        `).join('');
+      }
+
+      await fetchProductsFromCloud();
+      renderOrders();
+    };
+
+    async function fetchProductsFromCloud() {
+      try {
+        const snapshot = await db.collection("products").get();
+        if(!snapshot.empty) {
+          appData.products = [];
+          snapshot.forEach(doc => {
+            appData.products.push({ id: doc.id, ...doc.data() });
+          });
+        } else {
+          appData.products = fallbackProducts;
+          for(let p of fallbackProducts) {
+            await db.collection("products").doc(p.id).set(p);
+          }
+        }
+      } catch (err) {
+        console.warn("Using offline fallback products:", err);
+        appData.products = fallbackProducts;
+      }
+      renderProducts();
+    }
+
+    function startSaleTimer() {
+      let totalSeconds = 5 * 3600 + 42 * 60 + 18;
+      setInterval(() => {
+        if(totalSeconds > 0) totalSeconds--;
+        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(totalSeconds % 60).padStart(2, '0');
+        
+        const hEl = document.getElementById('timerHours');
+        const mEl = document.getElementById('timerMins');
+        const sEl = document.getElementById('timerSecs');
+        if(hEl) hEl.innerText = h;
+        if(mEl) mEl.innerText = m;
+        if(sEl) sEl.innerText = s;
+      }, 1000);
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById('productGridContainer');
+      if(!grid) return;
+      grid.innerHTML = appData.products.map(p => `
+        <div class="product-card">
+          <div class="prod-img-box" onclick="openPdp('${p.id}')">
+            <div class="wish-btn ${wishlist.includes(p.id) ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${p.id}')"><i class="${wishlist.includes(p.id) ? 'fa-solid' : 'fa-regular'} fa-heart"></i></div>
+            <img src="${p.images[0]}">
+          </div>
+          <div class="prod-body" onclick="openPdp('${p.id}')">
+            <div class="prod-name">${p.name}</div>
+            <div class="prod-pricing-row"><span class="prod-price">₹${p.price.toLocaleString('en-IN')}</span></div>
+          </div>
+          <div style="padding: 0 12px 12px 12px;">
+            <button class="btn-add-cart" onclick="addToCart('${p.id}')">Add to Cart</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleWishlist(id) {
+      if(wishlist.includes(id)) { wishlist = wishlist.filter(i => i !== id); } else { wishlist.push(id); }
+      renderProducts();
+      if(document.getElementById('view-wishlist').classList.contains('active')) renderWishlist();
+    }
+
+    function renderWishlist() {
+      const c = document.getElementById('wishlistContainer');
+      if(!c) return;
+      const wProds = appData.products.filter(p => wishlist.includes(p.id));
+      if(!wProds.length) { c.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted); background:var(--card); border-radius:12px;">Wishlist is empty.</div>`; return; }
+      c.innerHTML = wProds.map(p => `
+        <div class="product-card">
+          <div class="prod-img-box" onclick="openPdp('${p.id}')"><div class="wish-btn active" onclick="event.stopPropagation(); toggleWishlist('${p.id}')"><i class="fa-solid fa-heart"></i></div><img src="${p.images[0]}"></div>
+          <div class="prod-body" onclick="openPdp('${p.id}')"><div class="prod-name">${p.name}</div><div class="prod-pricing-row"><span class="prod-price">₹${p.price.toLocaleString('en-IN')}</span></div></div>
+          <div style="padding: 0 12px 12px 12px;"><button class="btn-add-cart" onclick="addToCart('${p.id}')">Move to Cart</button></div>
+        </div>
+      `).join('');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toastNotification'); 
+      if(!t) return;
+      t.querySelector('span').innerText = msg;
+      t.classList.add('show'); 
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function addToCart(id) {
+      const p = appData.products.find(i => i.id === id);
+      const ex = cart.find(i => i.id === id);
+      if(ex) ex.qty++; else cart.push({...p, qty: 1});
+      updateCartUI(); 
+      showToast('Added to Bag');
+    }
+
+    function updateQty(id, change) {
+      const item = cart.find(i => i.id === id);
+      if(!item) return; 
+      item.qty += change;
+      if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const qty = cart.reduce((a,i) => a + i.qty, 0);
+      let tot = cart.reduce((a,i) => a + (i.price * i.qty), 0);
+      
+      const badge = document.getElementById('cartBadge');
+      if(badge) {
+        if(qty > 0) { badge.style.display = 'flex'; badge.innerText = qty; } 
+        else { badge.style.display = 'none'; discountApplied = 0; }
+      }
+
+      const sb = document.getElementById('stickyCartBar');
+      const waBtn = document.getElementById('whatsappBtn');
+      const isCartActive = document.getElementById('view-cart').classList.contains('active');
+      
+      if (isCartActive) {
+        if(sb) sb.classList.remove('show');
+        if(waBtn) waBtn.style.display = 'none';
+      } else {
+        if(waBtn) waBtn.style.display = 'flex';
+        if(qty > 0) {
+          if(sb) sb.classList.add('show');
+          const itmText = document.getElementById('stickyItemsText');
+          const totText = document.getElementById('stickyTotalText');
+          if(itmText) itmText.innerText = `${qty} Item${qty>1?'s':''}`;
+          if(totText) totText.innerText = `₹${tot.toLocaleString('en-IN')}`;
+        } else {
+          if(sb) sb.classList.remove('show');
+        }
+      }
+
+      const container = document.getElementById('cartItemsContainer');
+      const summary = document.getElementById('cartSummaryBox');
+      if(!container || !summary) return;
+      
+      if(!cart.length) { 
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); background:var(--card); border-radius:12px;">Your Cart is Empty.</div>`; 
+        summary.style.display = 'none'; 
+        return; 
+      }
+
+      container.innerHTML = cart.map(i => `
+        <div class="cart-item">
+          <div class="cart-img"><img src="${i.images[0]}"></div>
+          <div class="cart-details">
+            <div class="cart-title">${i.name}</div>
+            <div class="cart-price">₹${i.price.toLocaleString('en-IN')}</div>
+            <div class="cart-controls">
+              <div class="qty-btn" onclick="updateQty('${i.id}', -1)">-</div><span style="font-size:14px; font-weight:bold;">${i.qty}</span><div class="qty-btn" onclick="updateQty('${i.id}', 1)">+</div>
+              <i class="fa-solid fa-trash-can" style="color:var(--danger); cursor:pointer; margin-left:auto;" onclick="updateQty('${i.id}', -99)"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      const mrpEl = document.getElementById('summMrp');
+      if(mrpEl) mrpEl.innerText = `₹${tot.toLocaleString('en-IN')}`;
+
+      if(discountApplied > 0) {
+        const cRow = document.getElementById('couponRow');
+        const cSum = document.getElementById('summCoupon');
+        if(cRow) cRow.style.display = 'flex';
+        if(cSum) cSum.innerText = `-₹${discountApplied}`;
+        tot -= discountApplied;
+      } else {
+        const cRow = document.getElementById('couponRow');
+        if(cRow) cRow.style.display = 'none';
+      }
+
+      const totEl = document.getElementById('summTotal');
+      if(totEl) totEl.innerText = `₹${tot.toLocaleString('en-IN')}`;
+      summary.style.display = 'block';
+    }
+
+    function checkPincode() {
+      const pin = document.getElementById('pinInput').value;
+      const res = document.getElementById('pinResult'); 
+      if(!res) return;
+      res.style.display = 'block';
+      if(pin.length === 6) res.innerHTML = `<span style="color:var(--success);"><i class="fa-solid fa-check"></i> Free Delivery available to ${pin}</span>`;
+      else res.innerHTML = `<span style="color:var(--danger);"><i class="fa-solid fa-xmark"></i> Enter valid 6 digit pincode.</span>`;
+    }
+
+    function applyCoupon() {
+      const code = document.getElementById('couponInput').value.trim().toUpperCase();
+      const res = document.getElementById('couponResult'); 
+      if(!res) return;
+      res.style.display = 'block';
+      if(code === 'ELITE100') { discountApplied = 100; res.innerHTML = `<span style="color:var(--success);">₹100 Off Applied!</span>`; updateCartUI(); }
+      else { discountApplied = 0; res.innerHTML = `<span style="color:var(--danger);">Invalid Code</span>`; updateCartUI(); }
+    }
+
+    function openCheckout() { 
+      const modal = document.getElementById('checkoutModal');
+      if(modal) modal.classList.add('open'); 
+    }
+    
+    function closeCheckout() { 
+      const modal = document.getElementById('checkoutModal');
+      if(modal) modal.classList.remove('open'); 
+    }
+
+    async function placeOrder() {
+      const isLogged = sessionStorage.getItem("isLoggedIn");
+      if(isLogged !== "true") {
+        closeCheckout();
+        openLogin();
+        showToast("Please Login First to Place Order!");
+        return;
+      }
+      const nameInput = document.getElementById('chkName');
+      const addrInput = document.getElementById('chkAddr');
+      if(!nameInput || !nameInput.value.trim()) { alert("Enter Name!"); return; }
+      
+      const id = 'OD' + Math.floor(100000 + Math.random() * 900000);
+      const tot = cart.reduce((a,i) => a + (i.price * i.qty), 0) - discountApplied;
+      
+      const newOrder = {
+        id,
+        customerName: nameInput.value.trim(),
+        address: addrInput ? addrInput.value.trim() : "",
+        date: new Date().toLocaleDateString('en-IN'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        total: tot,
+        items: [...cart],
+        status: 'Order Placed'
+      };
+
+      try {
+        await db.collection("orders").doc(id).set(newOrder);
+        alert(`Order Confirmed & Saved to Cloud!\nOrder ID: ${id}`);
+      } catch (err) {
+        console.error("Error saving order:", err);
+      }
+
+      myOrders.unshift(newOrder);
+      cart = []; 
+      updateCartUI(); 
+      closeCheckout(); 
+      renderOrders(); 
+      switchTab('orders');
+    }
+
+    function renderOrders() {
+      const c = document.getElementById('ordersContainer');
+      if(!c) return;
+      if(!myOrders.length) { c.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); background:var(--card); border-radius:12px;">No orders found.</div>`; return; }
+      c.innerHTML = myOrders.map(o => `
+        <div class="order-card">
+          <div class="order-header"><span style="font-weight:900;">#${o.id}</span><span style="font-size:11px; color:var(--muted);">${o.date}</span></div>
+          ${o.items.map(i => `<div class="order-item"><div class="order-item-img"><img src="${i.images[0]}"></div><div style="flex:1"><div style="font-size:12px; font-weight:700;">${i.name}</div><div style="font-size:11px; color:var(--muted);">Qty: ${i.qty}</div></div></div>`).join('')}
+          <div class="order-footer"><span style="font-size:15px; font-weight:900; color:var(--gold);">₹${o.total.toLocaleString('en-IN')}</span><span class="order-status"><i class="fa-solid fa-truck-fast"></i> ${o.status}</span></div>
+        </div>
+      `).join('');
+    }
+
+    function openPdp(id) {
+      currentPdpId = id;
+      const p = appData.products.find(i => i.id === id);
+      if(!p) return;
+      
+      const titleEl = document.getElementById('pdpTitle');
+      const priceEl = document.getElementById('pdpPrice');
+      const descEl = document.getElementById('pdpDescription');
+      if(titleEl) titleEl.innerText = p.name;
+      if(priceEl) priceEl.innerText = `₹${p.price.toLocaleString('en-IN')}`;
+      if(descEl) descEl.innerText = p.desc;
+      
+      const returnTextEl = document.getElementById('pdpReturnText');
+      const codTextEl = document.getElementById('pdpCodText');
+      const returnRow = document.getElementById('pdpReturnRow');
+      const codRow = document.getElementById('pdpCodRow');
+
+      if(returnTextEl) returnTextEl.innerText = p.returnText;
+      if(codTextEl) codTextEl.innerText = p.codText;
+
+      if(returnRow) {
+        returnRow.querySelector('i').className = p.returnable ? "fa-solid fa-rotate-left" : "fa-solid fa-ban";
+        returnRow.querySelector('i').style.color = p.returnable ? "var(--gold)" : "var(--danger)";
+      }
+
+      if(codRow) {
+        codRow.querySelector('i').className = p.codAvailable ? "fa-solid fa-truck-fast" : "fa-solid fa-ban";
+        codRow.querySelector('i').style.color = p.codAvailable ? "var(--success)" : "var(--danger)";
+      }
+
+      currentLightboxImages = p.images;
+
+      const scroller = document.getElementById('pdpPhotosScroller');
+      const dots = document.getElementById('pdpPhotoDots');
+      
+      if(scroller) {
+        scroller.innerHTML = p.images.map((img, idx) => `
+          <div class="pdp-large-img-wrap" onclick="openZoomLightbox(${idx})">
+            <img src="${img}">
+          </div>
+        `).join('');
+      }
+
+      if(dots) {
+        dots.innerHTML = p.images.map((_, idx) => `<div class="pdp-dot ${idx===0?'active':''}" id="pdot-${idx}"></div>`).join('');
+      }
+
+      if(scroller) {
+        scroller.onscroll = () => {
+          const activeIdx = Math.round(scroller.scrollLeft / scroller.clientWidth);
+          p.images.forEach((_, idx) => {
+            const dot = document.getElementById(`pdot-${idx}`);
+            if(dot) dot.classList.toggle('active', idx === activeIdx);
+          });
+        };
+      }
+
+      const pdpPage = document.getElementById('pdpFullPage');
+      if(pdpPage) pdpPage.classList.add('open');
+    }
+    
+    function closePdpPage() { 
+      const pdpPage = document.getElementById('pdpFullPage');
+      if(pdpPage) pdpPage.classList.remove('open'); 
+    }
+
+    function openZoomLightbox(startIdx) {
+      const lb = document.getElementById('zoomLightbox');
+      const scr = document.getElementById('lbScroller');
+      if(!lb || !scr) return;
+      
+      scr.innerHTML = currentLightboxImages.map((img, i) => `
+        <div class="lb-slide">
+          <img src="${img}" id="lbimg-${i}" ondblclick="toggleZoom(${i})">
+        </div>
+      `).join('');
+
+      setTimeout(() => { scr.scrollLeft = startIdx * scr.clientWidth; }, 50);
+      lb.style.display = 'flex';
+    }
+
+    function toggleZoom(i) {
+      const img = document.getElementById(`lbimg-${i}`);
+      if(!img) return;
+      currentZoomScale = currentZoomScale === 1 ? 2.5 : 1;
+      img.style.transform = `scale(${currentZoomScale})`;
+      img.style.cursor = currentZoomScale === 1 ? 'zoom-in' : 'zoom-out';
+    }
+
+    function closeZoomLightbox() {
+      const lb = document.getElementById('zoomLightbox');
+      if(lb) lb.style.display = 'none';
+      currentZoomScale = 1;
+    }
+
+    function switchTab(tId) {
+      closePdpPage(); 
+      closeCheckout(); 
+      closeZoomLightbox();
+      ['home', 'categories', 'orders', 'cart', 'profile', 'wishlist'].forEach(id => {
+        const v = document.getElementById(`view-${id}`);
+        const n = document.getElementById(`nav-${id}`);
+        if(v) v.classList.toggle('active', id === tId);
+        if(n) n.classList.toggle('active', id === tId);
+      });
+      if(tId === 'wishlist') renderWishlist();
+      updateCartUI();
+      window.scrollTo(0, 0);
+    }
+  </script>
+
+<script>
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      const splash = document.getElementById("splashScreen");
+      if(splash) {
+        splash.style.opacity = "0";
+        setTimeout(() => splash.style.display = "none", 500);
+      }
+    }, 2000);
+  });
+</script>
+
+  <div class="login-page open" id="loginModal">
+    <div class="login-close" onclick="closeLogin()"><i class="fa-solid fa-xmark"></i></div>
+    <div class="login-card">
+      <div class="login-title">ELITE FINMOBILES</div>
+      <div class="login-sub">Login or Sign up to access your account</div>
+      
+      <div id="phoneStep">
+        <div class="login-input-group">
+          <span>+91</span>
+          <input type="tel" id="loginPhoneInput" class="login-input" placeholder="Enter mobile number" maxlength="10">
+        </div>
+        <button class="btn-login" onclick="sendOtp()">Continue</button>
+      </div>
+
+      <div id="otpStep" style="display:none;">
+        <div style="font-size:13px; color:#FFF; margin-bottom:12px;">OTP sent to <span id="dispPhone" style="color:var(--gold);"></span></div>
+        <div class="login-input-group">
+          <input type="text" id="loginOtpInput" class="login-input" placeholder="Enter 6-digit OTP" maxlength="6" style="text-align:center; letter-spacing:4px;">
+        </div>
+        <button class="btn-login" onclick="verifyOtp()">Verify & Login</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function openLogin() {
+    const m = document.getElementById('loginModal');
+    if(m) m.classList.add('open');
+  }
+  function closeLogin() {
+    const m = document.getElementById('loginModal');
+    if(m) m.classList.remove('open');
+  }
+  function sendOtp() {
+    const phone = document.getElementById('loginPhoneInput').value.trim();
+    if(phone.length !== 10) {
+      alert("Kripya 10 ankon ka valid mobile number daalein!");
+      return;
+    }
+    document.getElementById('dispPhone').innerText = "+91 " + phone;
+    document.getElementById('phoneStep').style.display = 'none';
+    document.getElementById('otpStep').style.display = 'block';
+    showToast("OTP Sent Successfully!");
+  }
+  function verifyOtp() {
+    const otp = document.getElementById('loginOtpInput').value.trim();
+    if(otp.length < 4) {
+      alert("Kripya sahi OTP daalein!");
+      return;
+    }
+    showToast("Login Successful!");
+    closeLogin();
+    // Profile section update kar sakte hain
+    const profileName = document.querySelector('.profile-name');
+    const profilePhone = document.querySelector('.profile-phone');
+    if(profileName) profileName.innerText = "Elite Verified User";
+    if(profilePhone) profilePhone.innerText = "+91 " + document.getElementById('loginPhoneInput').value;
+  }
+</script>
+
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const isLogged = sessionStorage.getItem('isLoggedIn');
+    const modal = document.getElementById('loginModal');
+    if (isLogged === 'true' && modal) {
+      modal.classList.remove('open');
+    }
+  });
+</script>
+
+</body>
+</html>
